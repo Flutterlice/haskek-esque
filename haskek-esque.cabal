@@ -1,0 +1,110 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: bdf5b41d0241d1c55cd4d100b743e63a03708890ddb27272aa2805fba08b2183
+
+name:           haskek-esque
+version:        0.1.0.0
+description:    A little game using GLFW / OpenGL
+homepage:       https://github.com/Flutterlice/haskek-esque#readme
+bug-reports:    https://github.com/Flutterlice/haskek-esque/issues
+author:         N`hlest
+maintainer:     flutterlice@gmail.com
+copyright:      2020 N`hlest
+license:        MIT
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    assets/Scientifica.bdf
+    assets/Scientifica.LICENSE
+    assets/sprite.png
+
+source-repository head
+  type: git
+  location: https://github.com/Flutterlice/haskek-esque
+
+library
+  exposed-modules:
+      Lib
+      Shaders
+  other-modules:
+      Paths_haskek_esque
+  hs-source-dirs:
+      src
+  default-extensions: QuasiQuotes
+  build-depends:
+      GLFW-b
+    , JuicyPixels
+    , OpenGL
+    , StateVar
+    , array
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , hamgui
+    , lens
+    , mtl
+    , parsec
+    , raw-strings-qq
+    , text
+    , vector
+  default-language: Haskell2010
+
+executable haskek-esque-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_haskek_esque
+  hs-source-dirs:
+      app
+  default-extensions: QuasiQuotes TemplateHaskell FlexibleContexts ScopedTypeVariables RankNTypes
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      GLFW-b
+    , JuicyPixels
+    , OpenGL
+    , StateVar
+    , array
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , hamgui
+    , haskek-esque
+    , lens
+    , mtl
+    , parsec
+    , raw-strings-qq
+    , text
+    , vector
+  default-language: Haskell2010
+
+test-suite haskek-esque-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_haskek_esque
+  hs-source-dirs:
+      test
+  default-extensions: QuasiQuotes
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      GLFW-b
+    , JuicyPixels
+    , OpenGL
+    , StateVar
+    , array
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , hamgui
+    , haskek-esque
+    , lens
+    , mtl
+    , parsec
+    , raw-strings-qq
+    , text
+    , vector
+  default-language: Haskell2010

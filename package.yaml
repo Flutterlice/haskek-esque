@@ -1,0 +1,63 @@
+name:                haskek-esque
+version:             0.1.0.0
+github:              "Flutterlice/haskek-esque"
+license:             MIT
+author:              "N`hlest"
+maintainer:          "flutterlice@gmail.com"
+copyright:           "2020 N`hlest"
+
+extra-source-files:
+- README.md
+- assets/*
+
+description:         A little game using GLFW / OpenGL
+
+dependencies:
+- base >= 4.7 && < 5
+- raw-strings-qq
+- JuicyPixels
+- bytestring
+- containers
+- StateVar
+- OpenGL
+- GLFW-b
+- hamgui
+- parsec
+- vector
+- array
+- text
+- lens
+- mtl
+
+default-extensions:
+- QuasiQuotes
+
+library:
+  source-dirs: src
+
+executables:
+  haskek-esque-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    default-extensions:
+    - TemplateHaskell
+    - FlexibleContexts
+    - ScopedTypeVariables
+    - RankNTypes
+    dependencies:
+    - haskek-esque
+
+tests:
+  haskek-esque-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - haskek-esque

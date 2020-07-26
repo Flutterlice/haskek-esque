@@ -1,0 +1,3 @@
+[submodule "hamgui"]
+	path = hamgui
+	url = git@github.com:Flutterlice/hamgui.git

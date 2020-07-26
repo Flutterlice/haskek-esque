@@ -1,0 +1,7 @@
+resolver: lts-16.11
+
+packages:
+- .
+
+extra-deps:
+- hamgui
