@@ -1,4 +1,5 @@
 .stack-work/
 stack.yaml.lock
+haskek-esque.cabal
 *~
 imgui.ini

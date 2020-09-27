@@ -31,6 +31,10 @@ dependencies:
 
 default-extensions:
 - QuasiQuotes
+- TemplateHaskell
+- FlexibleContexts
+- ScopedTypeVariables
+- RankNTypes
 
 library:
   source-dirs: src
@@ -43,11 +47,6 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    default-extensions:
-    - TemplateHaskell
-    - FlexibleContexts
-    - ScopedTypeVariables
-    - RankNTypes
     dependencies:
     - haskek-esque
 
