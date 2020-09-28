@@ -1,10 +1,10 @@
 module Shaders where
 
-import Text.RawString.QQ
-
 import qualified Graphics.Rendering.OpenGL.GL as GL
 import Data.StateVar (($=))
+import Text.RawString.QQ
 import Control.Monad
+
 
 type ShaderSource = String
 

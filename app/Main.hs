@@ -1,6 +1,6 @@
 module Main where
 
-import HaskekEsque
+import HaskekEsque ( runHaskekEsque )
 
 main :: IO ()
 main = runHaskekEsque

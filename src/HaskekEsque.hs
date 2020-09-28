@@ -1,72 +1,28 @@
 module HaskekEsque where
 
-import qualified Data.Vector.Storable      as V (fromList, length) 
+import qualified Data.Vector.Storable      as V  (fromList, length) 
 import qualified Data.ByteString           as BS (readFile) 
-import qualified Data.StateVar             as SV (get)
 import qualified Graphics.UI.GLFW          as GLFW
 import qualified Graphics.Rendering.OpenGL as GL
 import Data.Vector.Storable (unsafeWith)
-import Data.StateVar ( HasSetter(($=)) )
 import Graphics.Rendering.OpenGL (($=))
 import qualified Data.StateVar as SV
 import Control.Monad.State.Lazy
 import Control.Concurrent.MVar
 import Codec.Picture.Png
-import Foreign.Storable
-import Foreign.C.Types
-import Control.Monad
 import Control.Lens
-import Foreign.Ptr
-import Data.Word
 
-import Graphics.UI.BitMapFont
-import Graphics.UI.HamGui
-import Graphics.UI.BDF
+import Graphics.UI.HamGui.BitMapFont
+import Graphics.UI.HamGui.HamGui
+import Graphics.UI.HamGui.Types
+import Graphics.UI.HamGui.BDF
 import Shaders
-
-initHamGui :: IO (GL.Program, GL.BufferObject, GL.BufferObject)
-initHamGui = do
-  prog <- GL.createProgram
-  forM_ [(GL.FragmentShader, fragShaderHG),
-         (GL.VertexShader,   vertShaderHG)] $ processShader prog
-  GL.linkProgram prog
-  log <- GL.programInfoLog prog
-  unless (null log) $ putStrLn log
-  GL.currentProgram $= Just prog
-  bufArray <- GL.genObjectName
-  bufElementArray <- GL.genObjectName
-  GL.bindBuffer GL.ArrayBuffer $= Just bufArray
-  GL.vertexAttribPointer (GL.AttribLocation 0) $= (GL.ToFloat, GL.VertexArrayDescriptor 2 GL.Float (7*4) nullPtr)
-  GL.vertexAttribPointer (GL.AttribLocation 1) $= (GL.ToFloat, GL.VertexArrayDescriptor 3 GL.Float (7*4) (plusPtr (nullPtr::(Ptr Word8)) 8))
-  GL.vertexAttribPointer (GL.AttribLocation 2) $= (GL.ToFloat, GL.VertexArrayDescriptor 2 GL.Float (7*4) (plusPtr (nullPtr::(Ptr Word8)) 20))
-  return (prog, bufArray, bufElementArray)
-
-data Program = Program {
-    _program :: Maybe GL.Program,
-    _bufferArray :: Maybe GL.BufferObject,
-    _bufferElement :: Maybe GL.BufferObject,
-    _bufferStorage :: Maybe GL.BufferObject
-  }
-$(makeLenses ''Program)
-
-data InputEvent = 
-    KeyEvent GLFW.Key
-  | MouseEvent Double Double
-
-data GameState = GameState 
-  {
-    _windowHandle :: GLFW.Window,
-    _hamGuiState  :: HamGuiData,
-    _programMain  :: Program,
-    _programHG    :: Program,
-    _bitmapfont   :: BitMapFont
-  }
-makeLenses ''GameState
-
-type Game a = StateT GameState IO a
+import Types
+import Util
+import GUI
 
 initGraphics :: MVar [InputEvent] ->  IO (GLFW.Window, GL.Program, BitMapFont)
-initGraphics kq = do
+initGraphics kq = do -- TODO: prettify this function, looks a bit ugly
   GLFW.setErrorCallback $ Just (\e s -> putStrLn $ unwords [show e, show s])
   glfwInitStatus <- GLFW.init
   unless glfwInitStatus $ error "Failed to initialize GLFW"
@@ -115,53 +71,28 @@ processGameState kq =
         _ -> return ()
     )
 
-bindProgram :: Program -> IO ()
-bindProgram prog = do
-  GL.currentProgram                    $= prog ^. program
-  GL.bindBuffer GL.ShaderStorageBuffer $= prog ^. bufferStorage
-  GL.bindBuffer GL.ArrayBuffer         $= prog ^. bufferArray
-  GL.bindBuffer GL.ElementArrayBuffer  $= prog ^. bufferElement
-
-renderState :: Game ()
-renderState = do
-  win        <- use windowHandle
-  progMain   <- use programMain
-  progHam    <- use programHG
-  hgs        <- use hamGuiState
-  bmf        <- use bitmapfont
-  (cx, cy)   <- liftIO $ do
-    (cx, cy) <- GLFW.getCursorPos win
-    pure (cx, cy)
-  lmb <- liftIO $ GLFW.getMouseButton win GLFW.MouseButton'1
-  (_ ,hgsn) <- liftIO $ 
-    runStateT (do
-                 clearBuffers 
-                 setScreenSize (1024, 1024)
-                 updateMouseState (round cx, 1024 - round cy) (lmb == GLFW.MouseButtonState'Pressed, False)
-                 a <- button bmf (ObjectId "button 1") "pepega 1"
-                 _ <- button bmf (ObjectId "button 2") "pepega 2"
-                 _ <- button bmf (ObjectId "button 3") "pepega 3"
-                 when a $ liftIO $ print "Clicked"
-              ) hgs
-  hamGuiState .= hgsn
-  let numOfVertici  = (length $ view vertexDataL hgsn) -- TODO: do this thing without code dupe, all in IO thing
-  let numOfElements = (length $ view elemDataL hgsn)
+renderPre :: Game ()
+renderPre = do 
   liftIO $ do 
     GL.clearColor $= GL.Color4 0 0 0 1
     GL.clear [GL.ColorBuffer]
-    bindProgram progHam
-    _ <- runStateT (composeBuffers 
-      (\p -> GL.bufferData GL.ArrayBuffer $= (fromIntegral $ sizeOf (1::CFloat) * numOfVertici, p, GL.StaticDraw))
-      (\p -> GL.bufferData GL.ElementArrayBuffer $= (fromIntegral $ sizeOf (1::CInt) * numOfElements, p, GL.StaticDraw))) hgsn
-    GL.vertexAttribArray (GL.AttribLocation 0) $= GL.Enabled
-    GL.vertexAttribArray (GL.AttribLocation 1) $= GL.Enabled
-    GL.vertexAttribArray (GL.AttribLocation 2) $= GL.Enabled
-    GL.drawElements GL.Triangles (fromIntegral numOfElements) GL.UnsignedInt nullPtr
-    e <- SV.get GL.errors
-    forM_ e $ print
     pure ()
 
-  liftIO $ GLFW.swapBuffers win
+renderPost :: Game ()
+renderPost = do
+  win        <- use windowHandle
+  liftIO $ do
+    e <- SV.get GL.errors
+    forM_ e $ print
+    GLFW.swapBuffers win
+    pure ()
+
+renderState :: Game ()
+renderState = do
+  progMain   <- use programMain
+  liftIO $ do
+    bindProgram progMain
+    pure ()
 
 processUserInputs :: Game ()
 processUserInputs = do
@@ -187,11 +118,19 @@ terminateGraphics win = do
 runGame :: MVar [InputEvent] -> Game ()
 runGame kq = do
   win <- use windowHandle
+  hgs <- use hamGuiState
   kqu <- liftIO $ takeMVar kq
   liftIO $ putMVar kq []
-  processGameState kqu
+  processGameState kqu -- TODO: something is not right
   processUserInputs
+  bmf <- use bitmapfont -- TODO: put BMF into HamGuiState
+  -- TOOD: Inject inputs into HamGuiState
+  (_ ,hgsn) <- liftIO $ runStateT (runGUI bmf) hgs
+  hamGuiState .= hgsn -- TODO: make it look nicer
+  renderPre
   renderState
+  renderGUI
+  renderPost
   ifNotFinished <- unless <$> liftM2 (||) (liftIO $ GLFW.windowShouldClose win) shouldExit
   ifNotFinished $ runGame kq
 
