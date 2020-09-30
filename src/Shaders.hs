@@ -56,7 +56,7 @@ void main() {
 |]
 
 vertShader :: ShaderSource
-vertShader = [r| 
+vertShader = [r|
 #version 430
 void main() {
   gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
@@ -79,7 +79,7 @@ void main() {
 |]
 
 vertShaderHG :: ShaderSource
-vertShaderHG = [r| 
+vertShaderHG = [r|
 #version 330
 
 layout (location=0) in vec2 iPos;
@@ -116,6 +116,6 @@ void main() {
     } else {
       fragColor = vec4(r, r, r, 1.0);
     }
-  } 
+  }
 }
 |]

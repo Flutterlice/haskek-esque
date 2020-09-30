@@ -1,9 +1,9 @@
 module HaskekEsque where
 
-import qualified Data.Vector.Storable      as V  (fromList, length) 
-import qualified Data.ByteString           as BS (readFile) 
+import qualified Data.ByteString           as BS (readFile)
 import qualified Graphics.UI.GLFW          as GLFW
 import qualified Graphics.Rendering.OpenGL as GL
+import qualified Data.Vector.Storable      as V
 import Data.Vector.Storable (unsafeWith)
 import Graphics.Rendering.OpenGL (($=))
 import qualified Data.StateVar as SV
@@ -14,7 +14,6 @@ import Control.Lens
 
 import Graphics.UI.HamGui.BitMapFont
 import Graphics.UI.HamGui.HamGui
-import Graphics.UI.HamGui.Types
 import Graphics.UI.HamGui.BDF
 import Shaders
 import Types
@@ -37,7 +36,7 @@ initGraphics kq = do -- TODO: prettify this function, looks a bit ugly
   prog <- GL.createProgram
   forM_ [(GL.GeometryShader, geomShader),
          (GL.FragmentShader, fragShader),
-         (GL.VertexShader,   vertShader)] $ processShader prog 
+         (GL.VertexShader,   vertShader)] $ processShader prog
   GL.linkProgram prog
   log <- GL.programInfoLog prog
   unless (null log) $ putStrLn log
@@ -46,10 +45,10 @@ initGraphics kq = do -- TODO: prettify this function, looks a bit ugly
   GLFW.setCursorPosCallback win $ Just $ cursorCallback kq
   imageBS <- BS.readFile "assets/sprite.png"
   let img = decodePng imageBS
-  im <- case img of
+  _im <- case img of
        Left err -> putStrLn err >> undefined
        Right i -> return i
-  imId <- GL.genObjectName 
+  imId <- GL.genObjectName
   GL.textureBinding  GL.Texture2D      $= Just imId
   GL.textureFilter   GL.Texture2D      $= ((GL.Nearest, Nothing), GL.Nearest)
   GL.textureWrapMode GL.Texture2D GL.S $= (GL.Mirrored, GL.ClampToEdge)
@@ -58,7 +57,6 @@ initGraphics kq = do -- TODO: prettify this function, looks a bit ugly
   let dat = _rgbaData font
   let side = round $ sqrt $ fromIntegral $ V.length dat
   unsafeWith dat (\ptr -> GL.texImage2D GL.Texture2D GL.NoProxy 0 GL.R8 (GL.TextureSize2D side side) 0 (GL.PixelData GL.Red GL.UnsignedByte ptr))
-  a <- SV.get (GL.textureInternalFormat GL.Texture2D 0)
   GL.blend $= GL.Enabled
   GL.blendFunc $= (GL.SrcAlpha, GL.OneMinusSrcAlpha)
   return (win, prog, font)
@@ -66,21 +64,21 @@ initGraphics kq = do -- TODO: prettify this function, looks a bit ugly
 processGameState :: MonadState GameState m => [InputEvent] -> m ()
 processGameState kq =
   forM_ kq (\k ->
-      case k of 
+      case k of
         -- INPUT BE HERE
         _ -> return ()
     )
 
 renderPre :: Game ()
-renderPre = do 
-  liftIO $ do 
+renderPre = do
+  liftIO $ do
     GL.clearColor $= GL.Color4 0 0 0 1
     GL.clear [GL.ColorBuffer]
     pure ()
 
 renderPost :: Game ()
 renderPost = do
-  win        <- use windowHandle
+  win <- use windowHandle
   liftIO $ do
     e <- SV.get GL.errors
     forM_ e $ print
@@ -103,11 +101,11 @@ shouldExit :: Game Bool
 shouldExit = return False
 
 keyCallback :: MVar [InputEvent] -> GLFW.KeyCallback
-keyCallback kq win key k kstate kmods =
+keyCallback kq _win key _k kstate _kmods =
   when (kstate == GLFW.KeyState'Pressed) $ modifyMVar_ kq $ return.(:) (KeyEvent key)
 
 cursorCallback :: MVar [InputEvent] -> GLFW.CursorPosCallback
-cursorCallback kq win x y =
+cursorCallback kq _win x y =
   modifyMVar_ kq $ return.(:) (MouseEvent x y)
 
 terminateGraphics :: GLFW.Window -> IO ()
@@ -125,7 +123,7 @@ runGame kq = do
   processUserInputs
   bmf <- use bitmapfont -- TODO: put BMF into HamGuiState
   -- TOOD: Inject inputs into HamGuiState
-  (_ ,hgsn) <- liftIO $ runStateT (runGUI bmf) hgs
+  (_ ,hgsn) <- liftIO $ runStateT (runGUI bmf win) hgs
   hamGuiState .= hgsn -- TODO: make it look nicer
   renderPre
   renderState

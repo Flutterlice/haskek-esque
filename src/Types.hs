@@ -1,4 +1,4 @@
-module Types where 
+module Types where
 
 import qualified Graphics.UI.GLFW             as GLFW
 import qualified Graphics.Rendering.OpenGL.GL as GL
@@ -16,11 +16,11 @@ data Program = Program {
   }
 $(makeLenses ''Program)
 
-data InputEvent = 
+data InputEvent =
     KeyEvent GLFW.Key
   | MouseEvent Double Double
 
-data GameState = GameState 
+data GameState = GameState
   {
     _windowHandle :: GLFW.Window,
     _hamGuiState  :: HamGuiData,
