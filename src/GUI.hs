@@ -34,16 +34,17 @@ initHamGui = do
   GL.vertexAttribPointer (GL.AttribLocation 2) $= (GL.ToFloat, GL.VertexArrayDescriptor 2 GL.Float (7*4) (plusPtr (nullPtr::(Ptr Word8)) 20))
   return (prog, bufArray, bufElementArray)
 
-runGUI :: BitMapFont -> GLFW.Window -> HamGui () -- TODO: Remove bmf somewhere somehow
-runGUI bmf win = do
+runGUI :: GLFW.Window -> HamGui () -- TODO: Remove bmf somewhere somehow
+runGUI win = do
   newFrame
   setScreenSize (1024, 1024)
   (mx, my) <- liftIO $ GLFW.getCursorPos win
   lmb <- fmap (==GLFW.MouseButtonState'Pressed) $ liftIO $ GLFW.getMouseButton win GLFW.MouseButton'1
   uploadMouseState (round mx, 1024 - round my) (lmb, False)
-  a <- button bmf (ObjectId "button 1") "pepega 1"
-  _ <- button bmf (ObjectId "button 2") "pepega 2"
-  _ <- button bmf (ObjectId "button 3") "pepega 3"
+  a <- button (ObjectId "button 1") "pepega 1"
+  _ <- button (ObjectId "button 2") "pepega 2"
+  _ <- button (ObjectId "button 3") "pepega 3"
+  textInput (ObjectId "i")
   when a $ liftIO $ putStrLn "Clicked"
 
 renderGUI :: Game ()

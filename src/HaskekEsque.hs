@@ -11,8 +11,10 @@ import Control.Monad.State.Lazy
 import Control.Concurrent.MVar
 import Codec.Picture.Png
 import Control.Lens
+import Data.Char
 
 import Graphics.UI.HamGui.BitMapFont
+import Graphics.UI.HamGui.Types
 import Graphics.UI.HamGui.HamGui
 import Graphics.UI.HamGui.BDF
 import Shaders
@@ -61,11 +63,16 @@ initGraphics kq = do -- TODO: prettify this function, looks a bit ugly
   GL.blendFunc $= (GL.SrcAlpha, GL.OneMinusSrcAlpha)
   return (win, prog, font)
 
-processGameState :: MonadState GameState m => [InputEvent] -> m ()
+processGameState :: [InputEvent] -> Game ()
 processGameState kq =
   forM_ kq (\k ->
       case k of
-        -- INPUT BE HERE
+        KeyEvent k -> do
+          sca <- liftIO $ GLFW.getKeyScancode GLFW.Key'A
+          scz <- liftIO $ GLFW.getKeyScancode GLFW.Key'Z
+          sc <- liftIO $ GLFW.getKeyScancode k
+          when ((sca <= sc) && (sc <= scz)) $ do
+            hamGuiState . inputs . alphaNumPressed .= (Just $ [chr $ (sc - sca) + (ord 'a')])
         _ -> return ()
     )
 
@@ -116,14 +123,13 @@ terminateGraphics win = do
 runGame :: MVar [InputEvent] -> Game ()
 runGame kq = do
   win <- use windowHandle
-  hgs <- use hamGuiState
   kqu <- liftIO $ takeMVar kq
   liftIO $ putMVar kq []
   processGameState kqu -- TODO: something is not right
   processUserInputs
-  bmf <- use bitmapfont -- TODO: put BMF into HamGuiState
+  hgs <- use hamGuiState
   -- TOOD: Inject inputs into HamGuiState
-  (_ ,hgsn) <- liftIO $ runStateT (runGUI bmf win) hgs
+  (_ ,hgsn) <- liftIO $ runStateT (runGUI win) hgs
   hamGuiState .= hgsn -- TODO: make it look nicer
   renderPre
   renderState
@@ -142,10 +148,9 @@ runHaskekEsque = do
   (progHam, bufHamA, bufHamE)   <- initHamGui
   let state = GameState {
                   _windowHandle = win,
-                  _hamGuiState  = initHamGuiData,
+                  _hamGuiState  = initHamGuiData & bitMapFont .~ bmf,
                   _programMain  = Program (Just progMain) (Nothing)      (Nothing)      (Nothing),
-                  _programHG    = Program (Just progHam)  (Just bufHamA) (Just bufHamE) (Nothing),
-                  _bitmapfont   = bmf
+                  _programHG    = Program (Just progHam)  (Just bufHamA) (Just bufHamE) (Nothing)
                 }
   runStateT (initInState >> (runGame keyQueue)) state
   terminateGraphics win
