@@ -18,7 +18,9 @@ $(makeLenses ''Program)
 
 data InputEvent =
     KeyEvent GLFW.Key
+  | CharEvent Char
   | MouseEvent Double Double
+$(makePrisms ''InputEvent)
 
 data GameState = GameState
   {

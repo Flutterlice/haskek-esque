@@ -11,7 +11,7 @@ import Control.Monad.State.Lazy
 import Control.Concurrent.MVar
 import Codec.Picture.Png
 import Control.Lens
-import Data.Char
+import Data.Maybe
 
 import Graphics.UI.HamGui.BitMapFont
 import Graphics.UI.HamGui.Types
@@ -44,6 +44,7 @@ initGraphics kq = do -- TODO: prettify this function, looks a bit ugly
   unless (null log) $ putStrLn log
   GL.currentProgram $= Just prog
   GLFW.setKeyCallback win $ Just $ keyCallback kq
+  GLFW.setCharCallback win $ Just $ charCallback kq
   GLFW.setCursorPosCallback win $ Just $ cursorCallback kq
   imageBS <- BS.readFile "assets/sprite.png"
   let img = decodePng imageBS
@@ -66,14 +67,7 @@ initGraphics kq = do -- TODO: prettify this function, looks a bit ugly
 processGameState :: [InputEvent] -> Game ()
 processGameState kq =
   forM_ kq (\k ->
-      case k of
-        KeyEvent k -> do
-          sca <- liftIO $ GLFW.getKeyScancode GLFW.Key'A
-          scz <- liftIO $ GLFW.getKeyScancode GLFW.Key'Z
-          sc <- liftIO $ GLFW.getKeyScancode k
-          when ((sca <= sc) && (sc <= scz)) $ do
-            hamGuiState . inputs . alphaNumPressed .= (Just $ [chr $ (sc - sca) + (ord 'a')])
-        _ -> return ()
+      pure ()
     )
 
 renderPre :: Game ()
@@ -108,8 +102,13 @@ shouldExit :: Game Bool
 shouldExit = return False
 
 keyCallback :: MVar [InputEvent] -> GLFW.KeyCallback
-keyCallback kq _win key _k kstate _kmods =
+keyCallback kq _win key _k kstate _kmods = do
   when (kstate == GLFW.KeyState'Pressed) $ modifyMVar_ kq $ return.(:) (KeyEvent key)
+
+charCallback :: MVar [InputEvent] -> GLFW.CharCallback
+charCallback kq win char = do
+  modifyMVar_ kq $ return.(:) (CharEvent char)
+  pure ()
 
 cursorCallback :: MVar [InputEvent] -> GLFW.CursorPosCallback
 cursorCallback kq _win x y =
@@ -128,8 +127,8 @@ runGame kq = do
   processGameState kqu -- TODO: something is not right
   processUserInputs
   hgs <- use hamGuiState
-  -- TOOD: Inject inputs into HamGuiState
-  (_ ,hgsn) <- liftIO $ runStateT (runGUI win) hgs
+  let c = map (\(CharEvent c) -> c) $ filter (\x -> isJust $ x ^? _CharEvent) kqu -- TODO:
+  (_, hgsn) <- liftIO $ runStateT (uploadAlphaNums c >> runGUI win) hgs           -- look nicer
   hamGuiState .= hgsn -- TODO: make it look nicer
   renderPre
   renderState

@@ -44,7 +44,8 @@ runGUI win = do
   a <- button (ObjectId "button 1") "pepega 1"
   _ <- button (ObjectId "button 2") "pepega 2"
   _ <- button (ObjectId "button 3") "pepega 3"
-  textInput (ObjectId "i")
+  text <- textInput (ObjectId "i")
+  liftIO $ putStrLn text
   when a $ liftIO $ putStrLn "Clicked"
 
 renderGUI :: Game ()
