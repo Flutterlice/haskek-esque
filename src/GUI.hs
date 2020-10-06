@@ -2,7 +2,7 @@ module GUI where
 
 import qualified Graphics.UI.GLFW             as GLFW
 import qualified Graphics.Rendering.OpenGL.GL as GL
-import Control.Monad.State.Lazy
+import Control.Monad.State.Strict
 import Data.StateVar(($=))
 import Foreign.Storable
 import Foreign.C.Types
@@ -45,7 +45,6 @@ runGUI win = do
   _ <- button (ObjectId "button 2") "pepega 2"
   _ <- button (ObjectId "button 3") "pepega 3"
   text <- textInput (ObjectId "i")
-  liftIO $ putStrLn text
   when a $ liftIO $ putStrLn "Clicked"
 
 renderGUI :: Game ()

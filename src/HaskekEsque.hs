@@ -7,7 +7,7 @@ import qualified Data.Vector.Storable      as V
 import Data.Vector.Storable (unsafeWith)
 import Graphics.Rendering.OpenGL (($=))
 import qualified Data.StateVar as SV
-import Control.Monad.State.Lazy
+import Control.Monad.State.Strict
 import Control.Concurrent.MVar
 import Codec.Picture.Png
 import Control.Lens

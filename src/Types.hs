@@ -2,7 +2,7 @@ module Types where
 
 import qualified Graphics.UI.GLFW             as GLFW
 import qualified Graphics.Rendering.OpenGL.GL as GL
-import Control.Monad.State.Lazy
+import Control.Monad.State.Strict
 import Control.Lens
 
 import Graphics.UI.HamGui.BitMapFont
