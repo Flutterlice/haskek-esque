@@ -10,6 +10,7 @@ import Graphics.Rendering.OpenGL (($=))
 import qualified Data.StateVar as SV
 import Control.Monad.State.Strict
 import Control.Concurrent.MVar
+import Control.Concurrent
 import Codec.Picture.Png
 import Control.Lens
 import Data.Maybe
@@ -84,12 +85,18 @@ renderPre = do
 renderPost :: Game ()
 renderPost = do
   win <- use windowHandle
+  lframe <- use lastFrame
   liftIO $ do
     e <- SV.get GL.errors
     forM_ e $ print
+    GL.flush
+    Just p <- GLFW.getTime
+    print ((1000000/60.0)-(p-lframe)*1000000)
+    threadDelay $ ceiling $ ((1000000/60.0)-(p-lframe)*1000000)
     GLFW.swapBuffers win
-    -- GL.flush
     pure ()
+  nt <- liftIO $ fromJust <$> GLFW.getTime
+  lastFrame .= nt
 
 renderState :: Game ()
 renderState = do
@@ -162,13 +169,14 @@ runHaskekEsque = do
   keyQueue                      <- newMVar []
   (win, progMain, bmf)          <- initGraphics keyQueue
   (progHam, bufHamA, bufHamE)   <- initHamGui
-  vMV <- MV.new 10000
-  eMV <- MV.new 10000
+  vMV <- MV.new 1000
+  eMV <- MV.new 1000
   let state = GameState {
                   _windowHandle = win,
                   _hamGuiState  = initHamGuiData vMV eMV & bitMapFont .~ bmf,
                   _programMain  = Program (Just progMain) (Nothing)      (Nothing)      (Nothing),
-                  _programHG    = Program (Just progHam)  (Just bufHamA) (Just bufHamE) (Nothing)
+                  _programHG    = Program (Just progHam)  (Just bufHamA) (Just bufHamE) (Nothing),
+                  _lastFrame    = 0
                 }
   if isDebug then do
     defaultMain [ bgroup "bench" [ bench "1"  $ whnfIO (runStateT (initInState >> (benchmarkingRunGame)) state) ] ]

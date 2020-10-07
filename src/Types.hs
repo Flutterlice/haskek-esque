@@ -26,7 +26,8 @@ data GameState = GameState
     _windowHandle :: GLFW.Window,
     _hamGuiState  :: HamGuiData,
     _programMain  :: Program,
-    _programHG    :: Program
+    _programHG    :: Program,
+    _lastFrame    :: Double
   }
 makeLenses ''GameState
 

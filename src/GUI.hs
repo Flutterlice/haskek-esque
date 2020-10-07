@@ -40,27 +40,10 @@ runGUI win = do
   (mx, my) <- liftIO $ GLFW.getCursorPos win
   lmb <- fmap (==GLFW.MouseButtonState'Pressed) $ liftIO $ GLFW.getMouseButton win GLFW.MouseButton'1
   uploadMouseState (round mx, 1024 - round my) (lmb, False)
-  a <- button (ObjectId "button 1") "pepega 1"
-  _ <- button (ObjectId "button 2") "pepega 2"
-  _ <- button (ObjectId "button 3") "pepega 3"
-  _ <- button (ObjectId "button 4") "pepega 2"
-  _ <- button (ObjectId "button 5") "pepega 3"
-  _ <- button (ObjectId "button 6") "pepega 2"
-  _ <- button (ObjectId "button 7") "pepega 3"
-  _ <- button (ObjectId "button 8") "pepega 2"
-  _ <- button (ObjectId "button 9") "pepega 3"
-  _ <- button (ObjectId "button 10") "pepega 2"
-  _ <- button (ObjectId "button 11") "pepega 3"
-  _ <- button (ObjectId "button 12") "pepega 2"
-  _ <- button (ObjectId "button 13") "pepega 3"
-  _ <- button (ObjectId "button 14") "pepega 2"
-  _ <- button (ObjectId "button 15") "pepega 3"
-  _ <- button (ObjectId "button 16") "pepega 2"
-  _ <- button (ObjectId "button 17") "pepega 3"
-  _ <- button (ObjectId "button 18") "pepega 2"
-  _ <- button (ObjectId "button 19") "pepega 3"
+  forM_ [1..100] $ (\x -> void $ button (ObjectId $ "button " ++ show x) "pepega 1" ) 
   _ <- textInput (ObjectId "i")
-  when a $ liftIO $ putStrLn "Clicked"
+  pure ()
+  -- when a $ liftIO $ putStrLn "Clicked"
 
 renderGUI :: Game ()
 renderGUI = do
