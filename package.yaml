@@ -18,6 +18,8 @@ dependencies:
 - JuicyPixels
 - bytestring
 - containers
+- criterion
+- inline-c
 - StateVar
 - OpenGL
 - GLFW-b

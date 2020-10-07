@@ -10,7 +10,6 @@ import Control.Lens
 import Foreign.Ptr
 import Data.Word
 
-import Graphics.UI.HamGui.BitMapFont
 import Graphics.UI.HamGui.HamGui
 import Graphics.UI.HamGui.Types
 import Shaders
@@ -44,20 +43,36 @@ runGUI win = do
   a <- button (ObjectId "button 1") "pepega 1"
   _ <- button (ObjectId "button 2") "pepega 2"
   _ <- button (ObjectId "button 3") "pepega 3"
-  text <- textInput (ObjectId "i")
+  _ <- button (ObjectId "button 4") "pepega 2"
+  _ <- button (ObjectId "button 5") "pepega 3"
+  _ <- button (ObjectId "button 6") "pepega 2"
+  _ <- button (ObjectId "button 7") "pepega 3"
+  _ <- button (ObjectId "button 8") "pepega 2"
+  _ <- button (ObjectId "button 9") "pepega 3"
+  _ <- button (ObjectId "button 10") "pepega 2"
+  _ <- button (ObjectId "button 11") "pepega 3"
+  _ <- button (ObjectId "button 12") "pepega 2"
+  _ <- button (ObjectId "button 13") "pepega 3"
+  _ <- button (ObjectId "button 14") "pepega 2"
+  _ <- button (ObjectId "button 15") "pepega 3"
+  _ <- button (ObjectId "button 16") "pepega 2"
+  _ <- button (ObjectId "button 17") "pepega 3"
+  _ <- button (ObjectId "button 18") "pepega 2"
+  _ <- button (ObjectId "button 19") "pepega 3"
+  _ <- textInput (ObjectId "i")
   when a $ liftIO $ putStrLn "Clicked"
 
 renderGUI :: Game ()
 renderGUI = do
   hgs        <- use hamGuiState
   progHam    <- use programHG
-  let numOfVertici  = (length $ view vertexDataL hgs) -- TODO: do this thing without code dupe, all in IO thing
-  let numOfElements = (length $ view elemDataL hgs)
+  numOfVertici <- use (hamGuiState . vI)
+  numOfElements <- use (hamGuiState . eI)
   liftIO $ do
     bindProgram progHam
     _ <- runStateT (composeBuffers
-      (\p -> GL.bufferData GL.ArrayBuffer $= (fromIntegral $ sizeOf (1::CFloat) * numOfVertici, p, GL.StaticDraw))
-      (\p -> GL.bufferData GL.ElementArrayBuffer $= (fromIntegral $ sizeOf (1::CInt) * numOfElements, p, GL.StaticDraw))) hgs
+      (\p -> GL.bufferData GL.ArrayBuffer $= (fromIntegral $ sizeOf (1::CFloat) * fromIntegral numOfVertici, p, GL.StaticDraw))
+      (\p -> GL.bufferData GL.ElementArrayBuffer $= (fromIntegral $ sizeOf (1::CInt) * fromIntegral numOfElements, p, GL.StaticDraw))) hgs
     GL.vertexAttribArray (GL.AttribLocation 0) $= GL.Enabled
     GL.vertexAttribArray (GL.AttribLocation 1) $= GL.Enabled
     GL.vertexAttribArray (GL.AttribLocation 2) $= GL.Enabled

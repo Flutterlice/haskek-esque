@@ -4,6 +4,7 @@ import qualified Data.ByteString           as BS (readFile)
 import qualified Graphics.UI.GLFW          as GLFW
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Data.Vector.Storable      as V
+import qualified Data.Vector.Storable.Mutable      as MV
 import Data.Vector.Storable (unsafeWith)
 import Graphics.Rendering.OpenGL (($=))
 import qualified Data.StateVar as SV
@@ -12,6 +13,7 @@ import Control.Concurrent.MVar
 import Codec.Picture.Png
 import Control.Lens
 import Data.Maybe
+import System.Environment (getArgs)
 
 import Graphics.UI.HamGui.BitMapFont
 import Graphics.UI.HamGui.Types
@@ -21,6 +23,8 @@ import Shaders
 import Types
 import Util
 import GUI
+
+import Criterion.Main
 
 initGraphics :: MVar [InputEvent] ->  IO (GLFW.Window, GL.Program, BitMapFont)
 initGraphics kq = do -- TODO: prettify this function, looks a bit ugly
@@ -66,7 +70,7 @@ initGraphics kq = do -- TODO: prettify this function, looks a bit ugly
 
 processGameState :: [InputEvent] -> Game ()
 processGameState kq =
-  forM_ kq (\k ->
+  forM_ kq (\_ ->
       pure ()
     )
 
@@ -84,6 +88,7 @@ renderPost = do
     e <- SV.get GL.errors
     forM_ e $ print
     GLFW.swapBuffers win
+    -- GL.flush
     pure ()
 
 renderState :: Game ()
@@ -106,7 +111,7 @@ keyCallback kq _win key _k kstate _kmods = do
   when (kstate == GLFW.KeyState'Pressed) $ modifyMVar_ kq $ return.(:) (KeyEvent key)
 
 charCallback :: MVar [InputEvent] -> GLFW.CharCallback
-charCallback kq win char = do
+charCallback kq _win char = do
   modifyMVar_ kq $ return.(:) (CharEvent char)
   pure ()
 
@@ -137,19 +142,36 @@ runGame kq = do
   ifNotFinished <- unless <$> liftM2 (||) (liftIO $ GLFW.windowShouldClose win) shouldExit
   ifNotFinished $ runGame kq
 
+benchmarkingRunGame :: Game ()
+benchmarkingRunGame = do
+  win <- use windowHandle
+  hgs <- use hamGuiState
+  (_, hgsn) <- liftIO $ runStateT (runGUI win) hgs
+  hamGuiState .= hgsn
+  renderPre
+  renderState
+  renderGUI
+  renderPost
+
 initInState :: Game ()
 initInState = do pure()
 
 runHaskekEsque :: IO ()
 runHaskekEsque = do
+  isDebug <- (==["bench"]) <$> getArgs
   keyQueue                      <- newMVar []
   (win, progMain, bmf)          <- initGraphics keyQueue
   (progHam, bufHamA, bufHamE)   <- initHamGui
+  vMV <- MV.new 10000
+  eMV <- MV.new 10000
   let state = GameState {
                   _windowHandle = win,
-                  _hamGuiState  = initHamGuiData & bitMapFont .~ bmf,
+                  _hamGuiState  = initHamGuiData vMV eMV & bitMapFont .~ bmf,
                   _programMain  = Program (Just progMain) (Nothing)      (Nothing)      (Nothing),
                   _programHG    = Program (Just progHam)  (Just bufHamA) (Just bufHamE) (Nothing)
                 }
-  runStateT (initInState >> (runGame keyQueue)) state
+  if isDebug then do
+    defaultMain [ bgroup "bench" [ bench "1"  $ whnfIO (runStateT (initInState >> (benchmarkingRunGame)) state) ] ]
+  else
+    void $ runStateT (initInState >> (runGame keyQueue)) state
   terminateGraphics win
