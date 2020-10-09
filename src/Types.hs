@@ -24,7 +24,7 @@ $(makePrisms ''InputEvent)
 data GameState = GameState
   {
     _windowHandle :: GLFW.Window,
-    _hamGuiState  :: HamGuiData,
+    _hamGuiState  :: HamGuiData Int,
     _programMain  :: Program,
     _programHG    :: Program,
     _lastFrame    :: Double

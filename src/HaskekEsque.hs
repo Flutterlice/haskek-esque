@@ -91,8 +91,7 @@ renderPost = do
     forM_ e $ print
     GL.flush
     Just p <- GLFW.getTime
-    print ((1000000/60.0)-(p-lframe)*1000000)
-    threadDelay $ ceiling $ ((1000000/60.0)-(p-lframe)*1000000)
+    threadDelay $ ceiling $ ((1000000/60.0)-(p-lframe)*1000000) -- TODO: sort out this mess
     GLFW.swapBuffers win
     pure ()
   nt <- liftIO $ fromJust <$> GLFW.getTime
@@ -173,7 +172,7 @@ runHaskekEsque = do
   eMV <- MV.new 1000
   let state = GameState {
                   _windowHandle = win,
-                  _hamGuiState  = initHamGuiData vMV eMV & bitMapFont .~ bmf,
+                  _hamGuiState  = initHamGuiData 0 vMV eMV & bitMapFont .~ bmf,
                   _programMain  = Program (Just progMain) (Nothing)      (Nothing)      (Nothing),
                   _programHG    = Program (Just progHam)  (Just bufHamA) (Just bufHamE) (Nothing),
                   _lastFrame    = 0
