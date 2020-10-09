@@ -33,7 +33,7 @@ initHamGui = do
   GL.vertexAttribPointer (GL.AttribLocation 2) $= (GL.ToFloat, GL.VertexArrayDescriptor 2 GL.Float (7*4) (plusPtr (nullPtr::(Ptr Word8)) 20))
   return (prog, bufArray, bufElementArray)
 
-runGUI :: GLFW.Window -> HamGuiU Int () -- TODO: Remove bmf somewhere somehow
+runGUI :: GLFW.Window -> HamGuiU Int ()
 runGUI win = do
   newFrame
   setScreenSize (SPP 1024 1024)
@@ -43,7 +43,7 @@ runGUI win = do
   pressed <- button (ObjectId $ "add one more") "add one more"
   when pressed $ userData += 1
   a <- use userData
-  forM_ [1..a] $ (\x -> void $ button (ObjectId $ "button " ++ show x) "pepega 1" ) 
+  forM_ [1..a] $ (\x -> void $ button (ObjectId $ "button " ++ show x) "pepega 1" )
   _ <- textInput (ObjectId "i")
   pure ()
 

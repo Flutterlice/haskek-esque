@@ -17,8 +17,8 @@ import Data.Maybe
 import System.Environment (getArgs)
 
 import Graphics.UI.HamGui.BitMapFont
-import Graphics.UI.HamGui.Types
 import Graphics.UI.HamGui.HamGui
+import Graphics.UI.HamGui.Types
 import Graphics.UI.HamGui.BDF
 import Shaders
 import Types
@@ -28,7 +28,7 @@ import GUI
 import Criterion.Main
 
 initGraphics :: MVar [InputEvent] ->  IO (GLFW.Window, GL.Program, BitMapFont)
-initGraphics kq = do -- TODO: prettify this function, looks a bit ugly
+initGraphics kq = do
   GLFW.setErrorCallback $ Just (\e s -> putStrLn $ unwords [show e, show s])
   glfwInitStatus <- GLFW.init
   unless glfwInitStatus $ error "Failed to initialize GLFW"
@@ -138,9 +138,9 @@ runGame kq = do
   processGameState kqu -- TODO: something is not right
   processUserInputs
   hgs <- use hamGuiState
-  let c = map (\(CharEvent c) -> c) $ filter (\x -> isJust $ x ^? _CharEvent) kqu -- TODO:
-  (_, hgsn) <- liftIO $ runStateT (uploadAlphaNums c >> runGUI win) hgs           -- look nicer
-  hamGuiState .= hgsn -- TODO: make it look nicer
+  let c = map (\(CharEvent c) -> c) $ filter (\x -> isJust $ x ^? _CharEvent) kqu -- TODO: make it look nicer
+  (_, hgsn) <- liftIO $ runStateT (uploadAlphaNums c >> runGUI win) hgs
+  hamGuiState .= hgsn -- TODO: make it look nicer (state operations)
   renderPre
   renderState
   renderGUI
