@@ -1,3 +1,3 @@
 # haskek-esque
 
-There will be README somewhen in the future
+![ff](./git_files/showcase.gif)
