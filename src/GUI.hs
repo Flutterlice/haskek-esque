@@ -45,6 +45,7 @@ runGUI win = do
   a <- use userData
   forM_ [1..a] $ (\x -> void $ button (ObjectId $ "button " ++ show x) "pepega 1" )
   _ <- textInput (ObjectId "i")
+  _ <- checkbox (ObjectId "c")
   pure ()
 
 renderGUI :: Game ()
