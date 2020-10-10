@@ -40,6 +40,7 @@ runGUI win = do
   (mx, my) <- liftIO $ GLFW.getCursorPos win
   lmb <- fmap (==GLFW.MouseButtonState'Pressed) $ liftIO $ GLFW.getMouseButton win GLFW.MouseButton'1
   uploadMouseState (SPP (round mx) (1024 - round my)) (lmb, False)
+  _ <- textLabel (ObjectId "label") "HamGui Test"
   pressed <- button (ObjectId $ "add one more") "add one more"
   when pressed $ userData += 1
   a <- use userData
