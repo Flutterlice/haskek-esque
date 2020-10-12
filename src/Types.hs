@@ -24,11 +24,15 @@ $(makePrisms ''InputEvent)
 data GameState = GameState
   {
     _windowHandle :: GLFW.Window,
-    _hamGuiState  :: HamGuiData Int,
+    _hamGuiState  :: HamGuiData,
     _programMain  :: Program,
     _programHG    :: Program,
-    _lastFrame    :: Double
+    _lastFrame    :: Double,
+    _userData     :: Int
   }
 makeLenses ''GameState
 
 type Game a = StateT GameState IO a
+
+liftGUI :: HamGui a -> Game a
+liftGUI = zoom hamGuiState

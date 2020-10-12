@@ -137,10 +137,11 @@ runGame kq = do
   liftIO $ putMVar kq []
   processGameState kqu -- TODO: something is not right
   processUserInputs
-  hgs <- use hamGuiState
-  let c = map (\(CharEvent c) -> c) $ filter (\x -> isJust $ x ^? _CharEvent) kqu -- TODO: make it look nicer
-  (_, hgsn) <- liftIO $ runStateT (uploadAlphaNums c >> runGUI win) hgs
-  hamGuiState .= hgsn -- TODO: make it look nicer (state operations)
+  -- hgs <- use hamGuiState
+  -- let c = map (\(CharEvent c) -> c) $ filter (\x -> isJust $ x ^? _CharEvent) kqu -- TODO: make it look nicer
+  -- (_, hgsn) <- liftIO $ runStateT (uploadAlphaNums c >> runGUI win) hgs
+  runGUI win
+  -- hamGuiState .= hgsn -- TODO: make it look nicer (state operations)
   renderPre
   renderState
   renderGUI
@@ -152,8 +153,9 @@ benchmarkingRunGame :: Game ()
 benchmarkingRunGame = do
   win <- use windowHandle
   hgs <- use hamGuiState
-  (_, hgsn) <- liftIO $ runStateT (runGUI win) hgs
-  hamGuiState .= hgsn
+  -- (_, hgsn) <- liftIO $ runStateT (runGUI win) hgs
+  -- hamGuiState .= hgsn
+  runGUI win
   renderPre
   renderState
   renderGUI
@@ -172,10 +174,11 @@ runHaskekEsque = do
   eMV <- MV.new 1000
   let state = GameState {
                   _windowHandle = win,
-                  _hamGuiState  = initHamGuiData 0 vMV eMV & bitMapFont .~ bmf,
+                  _hamGuiState  = initHamGuiData vMV eMV & bitMapFont .~ bmf,
                   _programMain  = Program (Just progMain) (Nothing)      (Nothing)      (Nothing),
                   _programHG    = Program (Just progHam)  (Just bufHamA) (Just bufHamE) (Nothing),
-                  _lastFrame    = 0
+                  _lastFrame    = 0,
+                  _userData     = 0
                 }
   if isDebug then do
     defaultMain [ bgroup "bench" [ bench "1"  $ whnfIO (runStateT (initInState >> (benchmarkingRunGame)) state) ] ]
