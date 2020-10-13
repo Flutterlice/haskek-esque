@@ -6,6 +6,7 @@ import Control.Monad.State.Strict
 import Data.StateVar(($=))
 import Foreign.Storable
 import Foreign.C.Types
+import Data.Typeable (Typeable)
 import Control.Lens
 import Foreign.Ptr
 import Data.Word
@@ -32,6 +33,17 @@ initHamGui = do
   GL.vertexAttribPointer (GL.AttribLocation 1) $= (GL.ToFloat, GL.VertexArrayDescriptor 3 GL.Float (7*4) (plusPtr (nullPtr::(Ptr Word8)) 8))
   GL.vertexAttribPointer (GL.AttribLocation 2) $= (GL.ToFloat, GL.VertexArrayDescriptor 2 GL.Float (7*4) (plusPtr (nullPtr::(Ptr Word8)) 20))
   return (prog, bufArray, bufElementArray)
+
+data TypeSlider = TInt | TFloat deriving (Typeable, Show)
+
+instance Slidable TypeSlider where
+  slideBetween lower_bound higher_bound cursor _ _ = if ratio > 0.5 then TFloat else TInt
+    where size = higher_bound - lower_bound
+          v = cursor - lower_bound
+          ratio = (fromIntegral v) / (fromIntegral size)
+  fractionBetween _ _ val = case val of
+    TInt -> 0.0
+    TFloat -> 1.0
 
 runGUI :: GLFW.Window -> Game ()
 runGUI win = do

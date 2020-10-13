@@ -137,11 +137,7 @@ runGame kq = do
   liftIO $ putMVar kq []
   processGameState kqu -- TODO: something is not right
   processUserInputs
-  -- hgs <- use hamGuiState
-  -- let c = map (\(CharEvent c) -> c) $ filter (\x -> isJust $ x ^? _CharEvent) kqu -- TODO: make it look nicer
-  -- (_, hgsn) <- liftIO $ runStateT (uploadAlphaNums c >> runGUI win) hgs
   runGUI win
-  -- hamGuiState .= hgsn -- TODO: make it look nicer (state operations)
   renderPre
   renderState
   renderGUI
@@ -152,9 +148,6 @@ runGame kq = do
 benchmarkingRunGame :: Game ()
 benchmarkingRunGame = do
   win <- use windowHandle
-  hgs <- use hamGuiState
-  -- (_, hgsn) <- liftIO $ runStateT (runGUI win) hgs
-  -- hamGuiState .= hgsn
   runGUI win
   renderPre
   renderState
