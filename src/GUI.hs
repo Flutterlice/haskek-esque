@@ -41,17 +41,27 @@ runGUI win = do
     (mx, my) <- liftIO $ GLFW.getCursorPos win
     lmb <- fmap (==GLFW.MouseButtonState'Pressed) $ liftIO $ GLFW.getMouseButton win GLFW.MouseButton'1
     uploadMouseState (SPP (round mx) (1024 - round my)) (lmb, False)
-    -- _ <- textLabel (ObjectId "label") "HamGui Test"
+    _ <- textLabel (ObjectId "label") "HamGui Test"
     _ <- slider (ObjectId "slider") (10.0::Float) (0.0::Float) (10.0::Float)
+    t <- slider (ObjectId "slidert") (TInt) (TFloat) (TInt)
+    a <- slider (ObjectId "slider2") (5::Int) (0::Int) (100::Int)
+    case t of
+      TInt -> do
+        _ <- slider (ObjectId "slider3") (5::Int) (0::Int) (a::Int)
+        pure ()
+      TFloat -> do
+        _ <- slider (ObjectId "slider3") (5::Float) (0::Float) (fromIntegral a)
+        pure ()
     pure ()
-  -- pressed <- liftGUI $ button (ObjectId $ "add one more") "add one more"
-  -- when pressed $ userData += 1
-  -- a <- use userData
-  -- liftGUI $ do
-  --   forM_ [1..a] $ (\x -> void $ button (ObjectId $ "button " ++ show x) "pepega 1" )
-  --   _ <- textInput (ObjectId "i")
-  --   _ <- checkbox (ObjectId "c")
-  --   pure ()
+  liftGUI $ textLabel (ObjectId "label2") ""
+  pressed <- liftGUI $ button (ObjectId $ "add one more") "add one more"
+  when pressed $ userData += 1
+  a <- use userData
+  liftGUI $ do
+    forM_ [1..a] $ (\x -> void $ button (ObjectId $ "button " ++ show x) "pepega 1" )
+    _ <- textInput (ObjectId "i")
+    _ <- checkbox (ObjectId "c")
+    pure ()
 
 renderGUI :: Game ()
 renderGUI = do
