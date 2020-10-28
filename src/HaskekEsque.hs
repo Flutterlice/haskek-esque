@@ -27,6 +27,10 @@ import GUI
 
 import Criterion.Main
 
+dispatchEvent :: Event -> Game ()
+dispatchEvent e = do
+  eventBus . bus <>= [e]
+
 initGraphics :: MVar [InputEvent] ->  IO (GLFW.Window, GL.Program, BitMapFont)
 initGraphics kq = do
   GLFW.setErrorCallback $ Just (\e s -> putStrLn $ unwords [show e, show s])
@@ -130,6 +134,13 @@ terminateGraphics win = do
   GLFW.destroyWindow win
   GLFW.terminate
 
+processEvents :: Game ()
+processEvents = do
+  e <- getEventsOf (_UIEvent2 . _EA)
+  forM_ e (\_ -> liftIO $ print 777)
+  uiEvents <- consumeEventsOf _UIEvent
+  forM_ uiEvents (\(UIEvent a) -> liftIO $ print a)
+
 runGame :: MVar [InputEvent] -> Game ()
 runGame kq = do
   win <- use windowHandle
@@ -142,6 +153,8 @@ runGame kq = do
   renderState
   renderGUI
   renderPost
+  processEvents
+  clearEvents
   ifNotFinished <- unless <$> liftM2 (||) (liftIO $ GLFW.windowShouldClose win) shouldExit
   ifNotFinished $ runGame kq
 
@@ -171,7 +184,8 @@ runHaskekEsque = do
                   _programMain  = Program (Just progMain) (Nothing)      (Nothing)      (Nothing),
                   _programHG    = Program (Just progHam)  (Just bufHamA) (Just bufHamE) (Nothing),
                   _lastFrame    = 0,
-                  _userData     = 0
+                  _userData     = 0,
+                  _eventBus     = EventBus mempty
                 }
   if isDebug then do
     defaultMain [ bgroup "bench" [ bench "1"  $ whnfIO (runStateT (initInState >> (benchmarkingRunGame)) state) ] ]

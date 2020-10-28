@@ -34,7 +34,7 @@ initHamGui = do
   GL.vertexAttribPointer (GL.AttribLocation 2) $= (GL.ToFloat, GL.VertexArrayDescriptor 2 GL.Float (7*4) (plusPtr (nullPtr::(Ptr Word8)) 20))
   return (prog, bufArray, bufElementArray)
 
-data TypeSlider = TInt | TFloat deriving (Typeable, Show)
+data TypeSlider = TInt | TFloat deriving (Typeable, Show, Eq, Ord)
 
 instance Slidable TypeSlider where
   slideBetween lower_bound higher_bound cursor _ _ = if ratio > 0.5 then TFloat else TInt
@@ -49,6 +49,7 @@ runGUI :: GLFW.Window -> Game ()
 runGUI win = do
   liftGUI $ do
     newFrame
+    windowStart (WindowId "kek") "kik"
     setScreenSize (SPP 1024 1024)
     (mx, my) <- liftIO $ GLFW.getCursorPos win
     lmb <- fmap (==GLFW.MouseButtonState'Pressed) $ liftIO $ GLFW.getMouseButton win GLFW.MouseButton'1
@@ -67,6 +68,8 @@ runGUI win = do
     pure ()
   liftGUI $ textLabel (ObjectId "label2") ""
   pressed <- liftGUI $ button (ObjectId $ "add one more") "add one more"
+  when pressed $ dispatchEvent $ UIEvent2 EA
+  when pressed $ dispatchEvent $ UIEvent2 EB
   when pressed $ userData += 1
   a <- use userData
   liftGUI $ do
