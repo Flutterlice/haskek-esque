@@ -8,12 +8,10 @@ import qualified Data.Vector.Storable.Mutable      as MV
 import Data.Vector.Storable (unsafeWith)
 import Graphics.Rendering.OpenGL (($=))
 import qualified Data.StateVar as SV
-import Control.Monad.State.Strict
+import Control.Monad.State.Lazy
 import Control.Concurrent.MVar
-import Control.Concurrent
 import Codec.Picture.Png
 import Control.Lens
-import Data.Maybe
 import System.Environment (getArgs)
 
 import Graphics.UI.HamGui.BitMapFont
@@ -27,23 +25,19 @@ import GUI
 
 import Criterion.Main
 
-dispatchEvent :: Event -> Game ()
-dispatchEvent e = do
-  eventBus . bus <>= [e]
-
 initGraphics :: MVar [InputEvent] ->  IO (GLFW.Window, GL.Program, BitMapFont)
 initGraphics kq = do
   GLFW.setErrorCallback $ Just (\e s -> putStrLn $ unwords [show e, show s])
   glfwInitStatus <- GLFW.init
   unless glfwInitStatus $ error "Failed to initialize GLFW"
-  GLFW.windowHint $ GLFW.WindowHint'Resizable False
+  GLFW.windowHint $ GLFW.WindowHint'Resizable True
   windowCreationStatus <- GLFW.createWindow 1024 1024 "IO Pepega" Nothing Nothing
   win <- case windowCreationStatus of
     Just win -> do
       GLFW.makeContextCurrent windowCreationStatus
       return win
     Nothing -> error "Window creation failed"
-  GLFW.swapInterval 0
+  GLFW.swapInterval 1
   prog <- GL.createProgram
   forM_ [(GL.GeometryShader, geomShader),
          (GL.FragmentShader, fragShader),
@@ -55,6 +49,7 @@ initGraphics kq = do
   GLFW.setKeyCallback win $ Just $ keyCallback kq
   GLFW.setCharCallback win $ Just $ charCallback kq
   GLFW.setCursorPosCallback win $ Just $ cursorCallback kq
+  GLFW.setFramebufferSizeCallback win $ Just $ resizeCallback kq
   imageBS <- BS.readFile "assets/sprite.png"
   let img = decodePng imageBS
   _im <- case img of
@@ -89,17 +84,12 @@ renderPre = do
 renderPost :: Game ()
 renderPost = do
   win <- use windowHandle
-  lframe <- use lastFrame
   liftIO $ do
     e <- SV.get GL.errors
     forM_ e $ print
-    GL.flush
-    Just p <- GLFW.getTime
-    threadDelay $ ceiling $ ((1000000/60.0)-(p-lframe)*1000000) -- TODO: sort out this mess
     GLFW.swapBuffers win
     pure ()
-  nt <- liftIO $ fromJust <$> GLFW.getTime
-  lastFrame .= nt
+  pure ()
 
 renderState :: Game ()
 renderState = do
@@ -129,6 +119,11 @@ cursorCallback :: MVar [InputEvent] -> GLFW.CursorPosCallback
 cursorCallback kq _win x y =
   modifyMVar_ kq $ return.(:) (MouseEvent x y)
 
+resizeCallback :: MVar [InputEvent] -> GLFW.FramebufferSizeCallback
+resizeCallback kq _win x y = do
+  modifyMVar_ kq $ return.(:) (ResizeEvent x y)
+  GL.viewport $= ((GL.Position 0 0), (GL.Size (fromIntegral x) (fromIntegral y)))
+
 terminateGraphics :: GLFW.Window -> IO ()
 terminateGraphics win = do
   GLFW.destroyWindow win
@@ -144,11 +139,13 @@ processEvents = do
 runGame :: MVar [InputEvent] -> Game ()
 runGame kq = do
   win <- use windowHandle
-  kqu <- liftIO $ takeMVar kq
-  liftIO $ putMVar kq []
-  processGameState kqu -- TODO: something is not right
+  kqu <- liftIO $ modifyMVar kq $ pure . (,) []
+  processGameState kqu
   processUserInputs
-  runGUI win
+  when (has (traverse . _ResizeEvent) kqu) $ do
+    let Just (sx, sy) = (firstOf (traverse . _ResizeEvent) kqu) 
+    liftGUI $ screenSize .= (SS sx sy)
+  runGUI
   renderPre
   renderState
   renderGUI
@@ -160,8 +157,7 @@ runGame kq = do
 
 benchmarkingRunGame :: Game ()
 benchmarkingRunGame = do
-  win <- use windowHandle
-  runGUI win
+  runGUI
   renderPre
   renderState
   renderGUI
@@ -174,17 +170,17 @@ runHaskekEsque :: IO ()
 runHaskekEsque = do
   isDebug <- (==["bench"]) <$> getArgs
   keyQueue                      <- newMVar []
-  (win, progMain, bmf)          <- initGraphics keyQueue
+  (win, progMain, loadedBMF)    <- initGraphics keyQueue
   (progHam, bufHamA, bufHamE)   <- initHamGui
-  vMV <- MV.new 1000
-  eMV <- MV.new 1000
+  vMV <- MV.new 64
+  eMV <- MV.new 64 
+  (screen_x, screen_y) <- GLFW.getWindowSize win
+  let screen_size = SS screen_x screen_y
   let state = GameState {
                   _windowHandle = win,
-                  _hamGuiState  = initHamGuiData vMV eMV & bitMapFont .~ bmf,
+                  _hamGuiState  = initHamGuiData vMV eMV & bitMapFont .~ loadedBMF & screenSize .~ screen_size,
                   _programMain  = Program (Just progMain) (Nothing)      (Nothing)      (Nothing),
                   _programHG    = Program (Just progHam)  (Just bufHamA) (Just bufHamE) (Nothing),
-                  _lastFrame    = 0,
-                  _userData     = 0,
                   _eventBus     = EventBus mempty
                 }
   if isDebug then do

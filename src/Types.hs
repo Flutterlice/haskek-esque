@@ -2,15 +2,15 @@ module Types where
 
 import qualified Graphics.UI.GLFW             as GLFW
 import qualified Graphics.Rendering.OpenGL.GL as GL
-import Control.Monad.State.Strict
+import Control.Monad.State.Lazy
 import Control.Lens
 import Data.Monoid
 
 import Graphics.UI.HamGui.Types
 
 data Program = Program {
-    _program :: Maybe GL.Program,
-    _bufferArray :: Maybe GL.BufferObject,
+    _program       :: Maybe GL.Program,
+    _bufferArray   :: Maybe GL.BufferObject,
     _bufferElement :: Maybe GL.BufferObject,
     _bufferStorage :: Maybe GL.BufferObject
   }
@@ -20,6 +20,7 @@ data InputEvent =
     KeyEvent GLFW.Key
   | CharEvent Char
   | MouseEvent Double Double
+  | ResizeEvent Int Int
 $(makePrisms ''InputEvent)
 
 data E = EA | EB deriving Show
@@ -37,8 +38,6 @@ data GameState = GameState
     _hamGuiState  :: HamGuiData,
     _programMain  :: Program,
     _programHG    :: Program,
-    _lastFrame    :: Double,
-    _userData     :: Int,
     _eventBus     :: EventBus
   }
 makeLenses ''GameState

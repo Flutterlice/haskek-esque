@@ -2,7 +2,7 @@ module GUI where
 
 import qualified Graphics.UI.GLFW             as GLFW
 import qualified Graphics.Rendering.OpenGL.GL as GL
-import Control.Monad.State.Strict
+import Control.Monad.State.Lazy
 import Data.StateVar(($=))
 import Foreign.Storable
 import Foreign.C.Types
@@ -38,56 +38,29 @@ data TypeSlider = TInt | TFloat deriving (Typeable, Show, Eq, Ord)
 
 instance Slidable TypeSlider where
   slideBetween lower_bound higher_bound cursor _ _ = if ratio > 0.5 then TFloat else TInt
-    where size = higher_bound - lower_bound
-          v = cursor - lower_bound
+    where size  = higher_bound - lower_bound
+          v     = cursor - lower_bound
           ratio = (fromIntegral v) / (fromIntegral size)
   fractionBetween _ _ val = case val of
     TInt -> 0.0
     TFloat -> 1.0
 
-runGUI :: GLFW.Window -> Game ()
-runGUI win = do
-  liftGUI $ do
+runGUI :: Game ()
+runGUI = do
+  liftGUI $ do 
     newFrame
-    windowStart (WindowId "kek") "kik"
-    setScreenSize (SPP 1024 1024)
-    (mx, my) <- liftIO $ GLFW.getCursorPos win
-    lmb <- fmap (==GLFW.MouseButtonState'Pressed) $ liftIO $ GLFW.getMouseButton win GLFW.MouseButton'1
-    uploadMouseState (SPP (round mx) (1024 - round my)) (lmb, False)
-    _ <- textLabel (ObjectId "label") "HamGui Test"
-    _ <- slider (ObjectId "slider") (10.0::Float) (0.0::Float) (10.0::Float)
-    t <- slider (ObjectId "slidert") (TInt) (TFloat) (TInt)
-    a <- slider (ObjectId "slider2") (5::Int) (0::Int) (100::Int)
-    case t of
-      TInt -> do
-        _ <- slider (ObjectId "slider3") (5::Int) (0::Int) (a::Int)
-        pure ()
-      TFloat -> do
-        _ <- slider (ObjectId "slider3") (5::Float) (0::Float) (fromIntegral a)
-        pure ()
-    pure ()
-  liftGUI $ textLabel (ObjectId "label2") ""
-  pressed <- liftGUI $ button (ObjectId $ "add one more") "add one more"
-  when pressed $ dispatchEvent $ UIEvent2 EA
-  when pressed $ dispatchEvent $ UIEvent2 EB
-  when pressed $ userData += 1
-  a <- use userData
-  liftGUI $ do
-    forM_ [1..a] $ (\x -> void $ button (ObjectId $ "button " ++ show x) "pepega 1" )
-    _ <- textInput (ObjectId "i")
-    _ <- checkbox (ObjectId "c")
-    pure ()
+    forM_ [0..9] $ (\_ -> addText "Pepega :mega: FOOR SAAN" (RA $ SRect (SP 0 400) (SS (100) (100))))
 
 renderGUI :: Game ()
 renderGUI = do
-  hgs        <- use hamGuiState
-  progHam    <- use programHG
-  numOfVertici <- use (hamGuiState . vI)
+  hgs           <- use hamGuiState
+  progHam       <- use programHG
+  numOfVertici  <- use (hamGuiState . vI)
   numOfElements <- use (hamGuiState . eI)
   liftIO $ do
     bindProgram progHam
-    _ <- runStateT (composeBuffers
-      (\p -> GL.bufferData GL.ArrayBuffer $= (fromIntegral $ sizeOf (1::CFloat) * fromIntegral numOfVertici, p, GL.StaticDraw))
+    runStateT (composeBuffers
+      (\p -> GL.bufferData GL.ArrayBuffer        $= (fromIntegral $ sizeOf (1::CFloat) * fromIntegral numOfVertici, p, GL.StaticDraw))
       (\p -> GL.bufferData GL.ElementArrayBuffer $= (fromIntegral $ sizeOf (1::CInt) * fromIntegral numOfElements, p, GL.StaticDraw))) hgs
     GL.vertexAttribArray (GL.AttribLocation 0) $= GL.Enabled
     GL.vertexAttribArray (GL.AttribLocation 1) $= GL.Enabled
